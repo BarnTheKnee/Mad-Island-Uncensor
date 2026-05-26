@@ -22,9 +22,9 @@ Uncensor Mad Island with a single click.
 ## FAQ
 * ### Why does it take a couple of minutes to patch the game?
     Because it compresses the file back to its original size. The uncompressed file is around 3.5 GB while compressed is around 1GB.
-* ### Why patch the DLC file too?
-    Apparently if only the data.unity3d file is patched and there's no empty none.bat file, some DLC content may be still censored. It seems that both patching the DLC file or creating the empty none.bat fixes this problem, so the script does both.
 * ### Why create the empty none.bat file?
     Creating the empty file uncensors the majority of the game, but not all. And apparently patching the data.unity3d file doesn't uncensor some DLC content either. So the combination of patching the data.unity3d and creating the emtpy file is necessary to uncensor everything in the game.  
+* ### Why patch the DLC file too?
+    In order to uncensor some DLC content, either patching DLC file or creating the empty none.bat is necessary, so the script does both.
   
 [🛡️ View the live VirusTotal Scan Report here](https://www.virustotal.com/gui/url/4d08d91833b327ba212b252564c85e422946f31b8d1591abb3cb04d3a6ffa5d6)
