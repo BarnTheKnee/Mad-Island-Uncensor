@@ -5,6 +5,7 @@ Uncensor Mad Island with a single click.
 1. Download and extract the latest [release](https://github.com/BarnTheKnee/Mad-Island-Uncensor/releases).
 2. Move the executable to the main game folder.
 3. Run the executable.
+4. You can delete the executable once it's finished.
 
 ## What the patch does
 * It loads the file "Mad Island_data\data.unity3d" in memory.
