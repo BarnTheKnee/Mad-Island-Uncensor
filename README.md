@@ -1,6 +1,7 @@
 # Mad-Island-Uncensor
 Uncensor Mad Island with a single click.  
-<img width="1113" height="626" alt="WindowsTerminal_JSvUPHU3IJ" src="https://github.com/user-attachments/assets/eecd71b8-3817-4981-8a14-45f3850fc396" />
+<img width="667" height="450" alt="image" src="https://github.com/user-attachments/assets/ca8e7f11-9cd6-4f99-b03f-0359bc9be12b" />
+
 
 
 
