@@ -1,6 +1,7 @@
 # Mad-Island-Uncensor
 Uncensor Mad Island with a single click.  
-<img width="646" height="283" alt="WindowsTerminal_bKkl8tYioq" src="https://github.com/user-attachments/assets/1fd7cb72-69ca-4e50-a876-3cf7da71559e" />
+<img width="1113" height="626" alt="WindowsTerminal_JSvUPHU3IJ" src="https://github.com/user-attachments/assets/eecd71b8-3817-4981-8a14-45f3850fc396" />
+
 
 
 ## How to Use
@@ -14,11 +15,14 @@ Uncensor Mad Island with a single click.
 * It looks for a shader that contains the text "MosaicField".
 * It looks for the entries with "colMask" and "val = 15" and it replaces them with "val = 0".
 * Then saves and compresses the file.
+* It does the same process for the DLC file.
 * Finally, creates and empty file in "Mad Island_Data\StreamingAssets\XML\none.bat".
 
 ## FAQ
 * ### Why does it take a couple of minutes to patch the game?
     Because it compresses the file back to its original size. The uncompressed file is around 3.5 GB while compressed is around 1GB.
+* ### Why patch the DLC file too?
+    Apparently if only the data.unity3d file is patched and there's no empty none.bat file, some DLC content may be still censored. It seems that both patching the DLC file or creating the empty none.bat fixes this problem, so the script does both.
 * ### Why create the empty none.bat file?
     Creating the empty file uncensors the majority of the game, but not all.  
     After replacing the "val = 15" to "val = 0" (which should remove all mosaics), having the empty none.bat file is probably unnecessary, but it won't hurt.
