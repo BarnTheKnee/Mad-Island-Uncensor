@@ -28,4 +28,4 @@ Uncensor Mad Island with a single click.
     After replacing the "val = 15" to "val = 0" (which should remove all mosaics), having the empty none.bat file is probably unnecessary, but it won't hurt.
   
   
-[🛡️ View the live VirusTotal Scan Report here](https://www.virustotal.com/gui/url/99c97d8a180ff942a0889a0c7e4fa7c2fa69c219049bf6f06ca9dd00ae745a39)
+[🛡️ View the live VirusTotal Scan Report here](https://www.virustotal.com/gui/url/4d08d91833b327ba212b252564c85e422946f31b8d1591abb3cb04d3a6ffa5d6)
