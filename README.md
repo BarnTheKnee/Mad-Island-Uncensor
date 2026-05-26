@@ -2,7 +2,7 @@
 Uncensor Mad Island with a single click.
 
 ## How to Use
-1. Download and extract the latest [release](https://github.com/BarnTheKnee/Mad-Island-Uncensor/Releases).
+1. Download and extract the latest [release](https://github.com/BarnTheKnee/Mad-Island-Uncensor/releases).
 2. Move the executable to the main game folder.
 3. Run the executable.
 
