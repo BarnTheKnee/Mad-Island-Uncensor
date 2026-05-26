@@ -20,3 +20,6 @@ Uncensor Mad Island with a single click.
 * ### Why create the empty none.bat file?
     Creating the empty file uncensors the majority of the game, but not all.  
     After replacing the "val = 15" to "val = 0" (which should remove all mosaics), having the empty none.bat file is probably unnecessary, but it won't hurt.
+  
+  
+[🛡️ View the live VirusTotal Scan Report here](https://www.virustotal.com/gui/url/99c97d8a180ff942a0889a0c7e4fa7c2fa69c219049bf6f06ca9dd00ae745a39)
