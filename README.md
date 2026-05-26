@@ -11,7 +11,7 @@ Uncensor Mad Island with a single click.
 * It looks for a shader that contains the text "MosaicField".
 * It looks for the entries with "colMask" and "val = 15" and it replaces them with "val = 0".
 * Then saves and compresses the file.
-* Finally, it looks if the file "Mad Island_Data\StreamingAssets\XML\none.bat" exists and if it doesn't it creates an empty file with that name.
+* Finally, creates and empty file in "Mad Island_Data\StreamingAssets\XML\none.bat".
 
 ## FAQ
 * ### Why does it take a couple of minutes to patch the game?
