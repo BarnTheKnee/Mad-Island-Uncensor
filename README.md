@@ -1,5 +1,7 @@
 # Mad-Island-Uncensor
-Uncensor Mad Island with a single click.
+Uncensor Mad Island with a single click.  
+<img width="646" height="283" alt="WindowsTerminal_bKkl8tYioq" src="https://github.com/user-attachments/assets/1fd7cb72-69ca-4e50-a876-3cf7da71559e" />
+
 
 ## How to Use
 1. Download and extract the latest [release](https://github.com/BarnTheKnee/Mad-Island-Uncensor/releases).
