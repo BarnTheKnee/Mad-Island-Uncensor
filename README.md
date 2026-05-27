@@ -21,5 +21,6 @@ Uncensor Mad Island with a single click.
     Because it compresses the file back to its original size. The uncompressed file is around 3.5 GB while compressed is around 1GB.
 * ### Why create the empty none.bat file?
     A combination of patching the data.unity3d and creating an empty none.bat file is necessary to uncensor everything in the game.
-    
+
+      
 [🛡️ View the live VirusTotal Scan Report here](https://www.virustotal.com/gui/url/99c97d8a180ff942a0889a0c7e4fa7c2fa69c219049bf6f06ca9dd00ae745a39)
