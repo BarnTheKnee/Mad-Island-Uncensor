@@ -20,8 +20,8 @@ Uncensor Mad Island with a single click.
 * ### Why does it take a couple of minutes to patch the game?
     Because it compresses the file back to its original size. The uncompressed file is around 3.5 GB while compressed is around 1GB.
 * ### Why create the empty none.bat file?
-    Creating the empty file uncensors the majority of the game, but not all.
-    Apparently, patching the data.unity3d file doesn't uncensor some DLC content either.
+    Creating the empty file uncensors the majority of the game, but not all.  
+    Apparently, patching the data.unity3d file doesn't uncensor some DLC content either.  
     So a combination of patching the data.unity3d and creating an empty none.bat file is necessary to uncensor everything.
   
   
