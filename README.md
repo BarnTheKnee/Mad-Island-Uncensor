@@ -11,10 +11,10 @@ Uncensor Mad Island with a single click.
 
 ## What the patch does
 * Creates an empty file in "Mad Island_Data\StreamingAssets\XML\none.bat".
-* It loads the file "Mad Island_data\data.unity3d" in memory.
-* It looks for a shader that contains the text "MosaicField".
-* It looks for the entries with "colMask" and "val = 15" and it replaces them with "val = 0".
-* Then saves and compresses the file.
+* Loads the file "Mad Island_data\data.unity3d" in memory.
+* Looks for a shader that contains the text "MosaicField".
+* Looks for the entries with "colMask" and "val = 15" and it replaces them with "val = 0".
+* Saves and compresses the file.
 
 ## FAQ
 * ### Can I run the tool without compressing back the file?
