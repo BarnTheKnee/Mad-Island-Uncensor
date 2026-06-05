@@ -1,4 +1,4 @@
-# Mad-Island-Uncensor
+# Mad Island Uncensor
 Uncensor Mad Island with a single click.  
 <img width="573" height="290" alt="WindowsTerminal_krzpOAAAbW" src="https://github.com/user-attachments/assets/5d4479c0-edda-4168-a876-6480d97c208f" />
 
