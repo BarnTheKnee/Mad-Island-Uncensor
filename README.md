@@ -1,6 +1,6 @@
 # Mad-Island-Uncensor
 Uncensor Mad Island with a single click.  
-<img width="646" height="283" alt="WindowsTerminal_bKkl8tYioq" src="https://github.com/user-attachments/assets/1fd7cb72-69ca-4e50-a876-3cf7da71559e" />
+<img width="573" height="290" alt="WindowsTerminal_krzpOAAAbW" src="https://github.com/user-attachments/assets/5d4479c0-edda-4168-a876-6480d97c208f" />
 
 
 ## How to Use
@@ -10,17 +10,20 @@ Uncensor Mad Island with a single click.
 4. You can delete the executable once it's finished.
 
 ## What the patch does
+* Creates an empty file in "Mad Island_Data\StreamingAssets\XML\none.bat".
 * It loads the file "Mad Island_data\data.unity3d" in memory.
 * It looks for a shader that contains the text "MosaicField".
 * It looks for the entries with "colMask" and "val = 15" and it replaces them with "val = 0".
 * Then saves and compresses the file.
-* Finally, creates and empty file in "Mad Island_Data\StreamingAssets\XML\none.bat".
 
 ## FAQ
-* ### Why does it take a couple of minutes to patch the game?
-    Because it compresses the file back to its original size. The uncompressed file is around 3.5 GB while compressed is around 1GB.
+* ### Can I run the tool without compressing back the file?
+    Yes, you can run the executable from a command line with the flag -c
+    ```text
+    Mad_Island_Uncensor.exe -c
+    ```
 * ### Why create the empty none.bat file?
     A combination of patching the data.unity3d and creating an empty none.bat file is necessary to uncensor everything in the game.
 
       
-[🛡️ View the live VirusTotal Scan Report here](https://www.virustotal.com/gui/url/99c97d8a180ff942a0889a0c7e4fa7c2fa69c219049bf6f06ca9dd00ae745a39)
+[🛡️ View the live VirusTotal Scan Report here](https://www.virustotal.com/gui/url/0c8a2dc7ac6e72aa7db92362627cdbccc9cbd1414152afa9a29dc176258f3547)
