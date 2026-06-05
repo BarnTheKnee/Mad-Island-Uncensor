@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <TrimMode>link</TrimMode>
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AssetsTools.NET" Version="3.0.4" />
+    <EmbeddedResource Include="classdata.tpk" />
+  </ItemGroup>
+
+</Project>
