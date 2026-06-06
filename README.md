@@ -7,10 +7,10 @@ Uncensor Mad Island with a single click.
 2. Run the executable.
 
 ## What the patch does
-* Creates an empty file in "Mad Island_Data\StreamingAssets\XML\none.bat".
-* Loads the file "Mad Island_data\data.unity3d" in memory.
+* Creates an empty file in 'Mad Island_Data\StreamingAssets\XML\none.bat'.
+* Loads the file 'Mad Island_data\data.unity3d' in memory.
 * Looks for a shaders that contains the text "MosaicField".
-* Replaces the "val = 15" entries with "val = 0".
+* Replaces the 'val = 15' entries with 'val = 0'.
 * Saves and compresses the file.
 
 ## Flags
