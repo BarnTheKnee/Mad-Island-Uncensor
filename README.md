@@ -14,7 +14,7 @@ Get the latest version in [releases](https://github.com/BarnTheKnee/Mad-Island-U
 ### Linux / SteamOS
 > [!WARNING]
 > If the binary and the folders have the right permissions, the command line installation should work fine.  
-> But I don't know if the double-click installation without command line will work in every case.
+> But I don't know if the double-click installation without command line will work in every case.  
 > Use at your own risk.
 
 > [!NOTE]
