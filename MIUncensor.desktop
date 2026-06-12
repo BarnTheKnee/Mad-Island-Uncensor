@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.1.1
+Type=Application
+Name=MIUncensor
+Comment=Patches Unity bundle files
+Terminal=true
+Exec=sh -c 'cd "$(dirname "%k")" && ./MIUncensor'
+Categories=Utility;
