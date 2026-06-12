@@ -20,7 +20,7 @@ Get the latest version in [releases](https://github.com/BarnTheKnee/Mad-Island-U
 > [!NOTE]
 > The Linux/SteamOS version creates a backup by default. Both the original and backup files are located in the "Mad Island_Data" folder.
 
-1. Download and extract the .zip file into your game's main folder.
+1. Download and extract the .zip file into the game's main folder.
 2. Open a terminal in that directory and run the following command:
 ```text
 chmod +x ./MIUncensor && ./MIUncensor
@@ -28,7 +28,7 @@ chmod +x ./MIUncensor && ./MIUncensor
 
 If you don't want to use the command line:
 1. Switch your SteamOS to Desktop Mode.
-2. Download and extract the .zip file into your game's main folder.
+2. Download and extract the .zip file into the game's main folder.
 3. Select MIUncensor and MIUncensor.desktop, Right-click on them and select Properties (You may need to do this one by one).  
 4. Go to the Permissions tab and check "Is Executable". Close the window. <img width="636" height="450" alt="image" src="https://github.com/user-attachments/assets/e356e3aa-60dd-408d-905d-59c3dd9b4686" />
 5. Double-click the MIUncensor.desktop file to run it (choose "Execute" if prompted).
