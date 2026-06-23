@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -42,11 +43,11 @@ namespace MIUncensor
         {
             Stopwatch sw = new();
             sw.Start();
-            //string noneBatPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Mad Island_Data\StreamingAssets\XML", "none.bat");
+            //string[] keywords = ["mos", "moz", "masi", "maz", "pixel", "censor", "ピクセル", "モザイク"];
+            string[] keywords = ["MosaicField"];
             string noneBatPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Mad Island_Data", "StreamingAssets", "XML", "none.bat");
             string unityPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Mad Island_Data", "data.unity3d");
             string dlcPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Mad Island_Data", "StreamingAssets", "DLC", "dlc_00");
-            //string dlcPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Mad Island_Data\StreamingAssets\DLC", "dlc_00");
             // Default arguments
             bool backup = false;
             bool createNoneBat = true;
@@ -96,9 +97,11 @@ namespace MIUncensor
                         compType = AssetBundleCompressionType.LZ4Fast;
                 }
             }
+            Log();
+            Log("Mad Island Uncensor v1.1.2");
+            Log();
             if (createNoneBat)
             {
-                Log();
                 // Create an empty none.bat file
                 Log($"Creating 'Mad Island_Data\\StreamingAssets\\XML\\none.bat'");
                 CreateEmptyNoneBat(noneBatPath);
@@ -106,7 +109,8 @@ namespace MIUncensor
             Log();
             Log($"Modifying game assets");
             // Execute the main patching workflow on the asset bundle
-            PatchUnityBundle(unityPath, compType, unPack, backup);
+            if (PatchUnityBundle(unityPath, keywords, compType, unPack, backup))
+                Log($"{Path.GetFileName(unityPath)} successfully patched", 0, LogType.Ok);
             if (patchDLC)
             {
                 if (File.Exists(dlcPath))
@@ -119,8 +123,8 @@ namespace MIUncensor
                 Log();
                 if (!File.Exists(dlcPath))
                     Log ("[dlc_00 or dlc_00.zip] don't exist", 0, LogType.Error);
-                else
-                    PatchUnityBundle(dlcPath, compType, true, backup);
+                else if (PatchUnityBundle(dlcPath, keywords, compType, true, backup))
+                    Log($"{Path.GetFileName(dlcPath)} successfully patched", 0, LogType.Ok);
             }
             //Log();
             sw.Stop();
@@ -164,6 +168,11 @@ namespace MIUncensor
             }
             try
             {
+                if (!Directory.Exists(directory))
+                {
+                    Log($"\'Mad Island_Data\\StreamingAssets\\XML\' doesn't exist. Make sure this tool is in the game's root directory", 0, LogType.Error);
+                    return false;
+                }
                 Directory.CreateDirectory(directory);
                 File.WriteAllBytes(noneBat, []);
                 Log($"Empty {Path.GetFileName(noneBat)} successfully created.", 0, LogType.Ok);
@@ -176,74 +185,44 @@ namespace MIUncensor
             }
         }
         /// <summary>
-        /// Handles loading, targeting, modifying, saving, and re-compressing the specific asset bundle file.
+        /// Loads, targets, modifies and saves the specific asset bundle file.
         /// </summary>
-        public static bool PatchUnityBundle(string filePath, AssetBundleCompressionType compType = AssetBundleCompressionType.LZ4Fast, bool unPack = false, bool backup = false, string mosaicText = "MosaicField")
+        private static bool PatchUnityBundle(string fileName, string[] searchText, AssetBundleCompressionType compType = AssetBundleCompressionType.LZ4Fast, bool unPack = false, bool backup = false)
         {
-            string unpackedPath = filePath + ".pack";
-            string patchedPath = filePath + ".patch";
-            string compressedPath = filePath + ".comp";
             BundleFileInstance bundle = null;
             var am = new AssetsManager();
-
-            try
+            // Load Unity bundle
+            if (!LoadFile(unPack, fileName, ref bundle, am)) return false;
+            // Search for the Shaders with specific text
+            var foundShaders = SearchShaders(searchText, bundle, am);
+            // Edit the Shaders found
+            if (foundShaders.Count != 0 && !EditShaders(foundShaders, bundle, am))
             {
-                // Load the target Unity bundle
-                if (!LoadFile(unPack, filePath, unpackedPath, ref bundle, am))
-                    return false;
-                // Perform patching
-                if (!EditMosaicShader(mosaicText, bundle!, am))
-                {
-                    CloseBundle(bundle, am);
-                    CleanUpTempFiles(unpackedPath, patchedPath, compressedPath);
-                    Log("No modifications applied", 0, LogType.Warning);
-                    return false;
-                }
-                // Save changes
-                Log("Saving bundle...", 1);
-                using (var writer = new AssetsFileWriter(File.Create(patchedPath)))
-                {
-                    bundle!.file.Write(writer);
-                }
-                CloseBundle(bundle, am);
-                // Compress
-                if (compType != AssetBundleCompressionType.None && !Compress(compType, patchedPath, compressedPath))
-                    compressedPath = "";
-                // Finalize
-                if (FinalizePatch(filePath, patchedPath, compressedPath, backup) && CleanUpTempFiles(unpackedPath, patchedPath, compressedPath))
-                {
-                    Log($"{Path.GetFileName(filePath)} successfully patched", 0, LogType.Ok);
-                    return true;
-                }
+                CloseBundle(ref bundle, am);
+                Log("No modifications applied", 0, LogType.Warning);
                 return false;
             }
-            catch (Exception ex)
-            {
-                Log($"Patching failed: {ex.Message}", 0, LogType.Error);
-                return false;
-            }
-            finally
-            {
-                CleanUpTempFiles(unpackedPath, patchedPath, compressedPath);
-            }
+            // Save changes
+            return SaveUnityBundle(fileName, bundle, am, compType, unPack, backup);
         }
         /// <summary>
         /// Loads the bundle into memory.
         /// </summary>
-        private static bool LoadFile(bool unPack, string originalPath, string unpackedPath, ref BundleFileInstance bundle, AssetsManager am, bool logBundleName = true)
+        private static bool LoadFile(bool unPack, string originalPath, ref BundleFileInstance bundle, AssetsManager am, bool logBundleName = true)
         {
             if (!File.Exists(originalPath))
             {
                 string relativePath = Path.GetRelativePath(AppDomain.CurrentDomain.BaseDirectory, originalPath);
-                Log($"'{relativePath}' doesn't exist. Make sure this tool is in the game's root directory", 1, LogType.Error);
+                Log($"'{relativePath}' doesn't exist. Make sure this tool is in the game's root directory", 0, LogType.Error);
                 return false;
             }
-            GetTypeTree(am);
+            GetTypeTree(ref am);
             if (logBundleName) Log($"[{Path.GetFileName(originalPath)}]");
             string loadPath = originalPath;
             if (unPack)
             {
-                if (UnpackBundle(am, originalPath, unpackedPath))
+                string unpackedPath = originalPath + ".pack";
+                if (UnpackBundle(am, originalPath, ref unpackedPath))
                     loadPath = unpackedPath;
                 else
                     return false;
@@ -255,128 +234,128 @@ namespace MIUncensor
                 Log("Failed to load bundle file (returned null).", 0, LogType.Error);
                 return false;
             }
-            if (!GetConfSchema(bundle, ref am))
+            if (!GetConfSchema(bundle, am))
             {
                 if (unPack) return false;
                 // If this failed it could be because the bundle needs to be unpacked first
                 Log("Will retry unpacking the bundle first", 1);
-                return LoadFile(true, originalPath,unpackedPath, ref bundle, am, false);
+                CloseBundle(ref bundle, am);
+                return LoadFile(true, originalPath, ref bundle, am, false);
             }
             return true;
         }
         /// <summary>
-        /// Unpacks compressed archives to a temporary file.
+        /// Scans the bundle for shader assets matching the search text and returns their Path IDs grouped by directory block name.
         /// </summary>
-        private static bool UnpackBundle(AssetsManager am, string originalPath, string unpackedPath)
+        public static Dictionary<string, Dictionary<long, string>> SearchShaders(string[] searchText, BundleFileInstance bundle, AssetsManager am, string blockName = "")
         {
-            BundleFileInstance bundleInst = null;
-            try
-            {
-                bundleInst = am.LoadBundleFile(originalPath, false);
-                if (bundleInst.file.GetCompressionType() == AssetBundleCompressionType.None)
-                {
-                    Log($"{Path.GetFileName(originalPath)} is already uncompressed. Skipping extraction", 0, LogType.Skip);
-                    return false;
-                }
-                Log($"Unpacking...", 1);
-                using var writer = new AssetsFileWriter(File.Create(unpackedPath));
-                    bundleInst.file.Unpack(writer);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log($"Failed to unpack bundle: {ex.GetType().Name} - {ex.Message}", 0, LogType.Warning);
-                return false;
-            }
-            finally
-            {
-                CloseBundle(bundleInst, am);
-            }            
-        }
-        /// <summary>
-        /// Unpacks the embedded type database resource required by AssetsTools to serialize and deserialize assets without engine runtimes.
-        /// </summary>
-        private static void GetTypeTree(AssetsManager am)
-        {
-            var assembly = typeof(Uncensor).Assembly;
-            using var stream = assembly.GetManifestResourceStream("MIUncensor.classdata.tpk");
-            if (stream == null)
-            {
-                foreach (var name in assembly.GetManifestResourceNames()) Log("Available: " + name);
-                throw new Exception("Could not find embedded 'classdata.tpk'!");
-            }
-            am.LoadClassPackage(stream);
-        }
-        /// <summary>
-        /// Gather structural configuration schemas against the first indexed directory file's layout
-        /// </summary>
-        private static bool GetConfSchema(BundleFileInstance bundle, ref AssetsManager am)
-        {
-            try
-            {
-                var firstDir = bundle.file.BlockAndDirInfo.DirectoryInfos[0];
-                var assetInst = am.LoadAssetsFileFromBundle(bundle, firstDir.Name, false);
-                am.LoadClassDatabaseFromPackage(assetInst.file.Metadata.UnityVersion);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log($"Failed to initialize shader search: {ex.Message}", 1, LogType.Error);
-                return false;
-            }            
-        }
-        /// <summary>
-        /// Iterates through inner directory info files mapping, verifying, and altering valid shader data trees.
-        /// </summary>
-        private static bool EditMosaicShader(string searchText, BundleFileInstance bundle, AssetsManager am)
-        {
-            bool changesMade = false;
-            // Outer loop: Iterate through distinct serialized data files inside the bundle
+            var matchedAssets = new Dictionary<string, Dictionary<long, string>>();
             foreach (var dir in bundle.file.BlockAndDirInfo.DirectoryInfos)
             {
+                if(!string.IsNullOrEmpty(blockName) && blockName != dir.Name)
+                    continue;
                 var inst = am.LoadAssetsFileFromBundle(bundle, dir.Name, false);
                 if (inst?.file?.AssetInfos == null)
                     continue;
-                //Log($"[{dir.Name}]",1);
-                bool fileModified = false;
-                // Inner loop: Iterate through individual asset records stored inside the directory file
                 foreach (var info in inst.file.AssetInfos)
                 {
-                    // Filter down explicitly to Shader Assets
                     if ((AssetClassID)info.TypeId != AssetClassID.Shader)
                         continue;
                     try
                     {
                         var baseField = am.GetBaseField(inst, info);
-                        // Filter fields containing target search terminology strings
-                        if (!ContainsText(baseField, searchText))
-                            continue;
-                        Log($"\"{searchText}\" found. 'Path_ID = {info.PathId}'", 2);
-                        // Modify rendering properties inside type fields
-                        int changed = PatchColMask(baseField);
-                        if (changed > 0)
+                        string matchedShaderName = null;
+                        foreach (var target in searchText)
                         {
-                            info.SetNewData(baseField); 
-                            fileModified = true; 
-                            Log($"'val = 15' replaced with 'val = 0' in {changed} rows", 2);
-                        }
-                        else
-                        {
-                            Log("No 'val = 15' entries found. The file might be patched", 2, LogType.Skip);
+                            matchedShaderName = ContainsText(baseField, target);
+                            if (matchedShaderName != null) 
+                            {
+                                Log($"\"{target}\" found in 'Path_ID = {info.PathId}'", 2);
+                                // Ensure the list exists for this specific asset directory block
+                                if (!matchedAssets.TryGetValue(dir.Name, out Dictionary<long, string> value))
+                                {
+                                    value = [];
+                                    matchedAssets[dir.Name] = value;
+                                }
+                                value[info.PathId] = matchedShaderName;
+                                break;
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
-                        // Skips to the next asset
-                        Log($"Failed to process asset with 'Path_ID = {info.PathId}': {ex.Message}", 2, LogType.Error);
+                        // Skip to next asset
+                        Log($"Failed to scan asset with 'Path_ID = {info.PathId}': {ex.Message}", 2, LogType.Error);
                     }
-                }                
-                // Write updates to directory block once all mutations on the file scope are fully aggregated
+                }
+            }
+            // Convert the flat list into a lookup grouped by Directory Name
+            return matchedAssets;
+        }
+        /// <summary>
+        /// Overload to directly accept the output of SearchShaders as input
+        /// </summary>
+        public static bool EditShaders(Dictionary<string, Dictionary<long, string>> targets, BundleFileInstance bundle, AssetsManager am)
+        {
+            if (targets == null || targets.Count == 0) return false;
+            // Convert the nested dictionary
+            var convertedTargets = new Dictionary<string, List<long>>();
+            foreach (var dirKvp in targets)
+            {
+                string dirName = dirKvp.Key;
+                Dictionary<long, string> pathIdMap = dirKvp.Value;
+                // Extract just the Path_ID keys from the inner dictionary into a List
+                convertedTargets[dirName] = [.. pathIdMap.Keys];
+            }
+            return EditShaders(convertedTargets, bundle, am);
+        }
+        /// <summary>
+        /// Patches targeted shader assets within the bundle using pre-discovered directory block names and Path IDs.
+        /// </summary>
+        public static bool EditShaders(Dictionary<string, List<long>> targets, BundleFileInstance bundle, AssetsManager am)
+        {
+            if (targets == null || !targets.Any()) return false;
+            bool changesMade = false;
+            foreach (var dir in bundle.file.BlockAndDirInfo.DirectoryInfos)
+            {
+                // Snipe specific directory
+                if (!targets.ContainsKey(dir.Name)) continue;
+                var inst = am.LoadAssetsFileFromBundle(bundle, dir.Name, false);
+                if (inst?.file == null) continue;
+                bool fileModified = false;                
+                // Retrieve only the specific Path IDs saved for this directory block
+                foreach (long pathId in targets[dir.Name])
+                {
+                    //Log("Path_id=" + pathId, 2);
+                    // Direct asset lookup from the loaded file structure
+                    var info = inst.file.GetAssetInfo(pathId);
+                    if (info == null) continue;
+                    try
+                    {
+                        var baseField = am.GetBaseField(inst, info);
+                        int changed = PatchColMask(baseField);
+                        if (changed > 0)
+                        {
+                            info.SetNewData(baseField);
+                            fileModified = true;
+                            Log($"{changed} colMasks replaced in {pathId}", 2);
+                        }
+                        else
+                        {
+                            Log($"No 'val > 0' found in {pathId}, already patched?", 2, LogType.Skip);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"Failed to patch asset with 'Path_ID = {pathId}': {ex.Message}", 2, LogType.Error);
+                    }
+                }
+                // Save modifications back to this directory block
                 if (fileModified)
                 {
                     try
                     {
-                        Log($"Applying modifications to block...", 2);
+                        Log($"Applying modifications...", 2);
                         using var ms = new MemoryStream();
                         using (var assetsWriter = new AssetsFileWriter(ms))
                         {
@@ -395,51 +374,181 @@ namespace MIUncensor
             return changesMade;
         }
         /// <summary>
-        /// Recursively navigates deserialized layout trees to match string values safely.
+        /// Saves, compresses and backs up the modifications done to a Unity Bundle, then cleans up temporary files.
         /// </summary>
-        private static bool ContainsText(AssetTypeValueField field, string target)
+        public static bool SaveUnityBundle(string fileName, BundleFileInstance bundle, AssetsManager am, AssetBundleCompressionType compType = AssetBundleCompressionType.LZ4Fast, bool unPack = false, bool backup = false)
         {
-            if (field == null) return false;
-            if (field.Value?.AsString != null)
+            string unpackedPath = fileName + ".pack";
+            string patchedPath = fileName + ".patch";
+            string compressedPath = fileName + ".comp";
+            try
             {
-                var str = field.AsString;
-                if (!string.IsNullOrEmpty(str) && str.IndexOf(target, StringComparison.OrdinalIgnoreCase) >= 0)
+                // Save changes
+                Log("Saving bundle...", 1);
+                using (var writer = new AssetsFileWriter(File.Create(patchedPath)))
+                {
+                    bundle!.file.Write(writer);
+                }
+                CloseBundle(ref bundle, am);
+                // Compress
+                if (compType != AssetBundleCompressionType.None && !Compress(compType, patchedPath, compressedPath))
+                    compressedPath = "";
+                // Backups and/or replaces the original file with the patched or compressed one
+                if (FinalizePatch(fileName, patchedPath, compressedPath, backup))
                     return true;
+                return false;
             }
-            if (field.Children != null)
-                foreach (var child in field.Children)
-                    if (ContainsText(child, target))
-                        return true;
-            return false;
+            catch (Exception ex)
+            {
+                Log($"Patching failed: {ex.Message}", 0, LogType.Error);
+                return false;
+            }
+            finally
+            {
+                CleanUpTempFiles(unpackedPath, patchedPath, compressedPath);
+            }
         }
         /// <summary>
-        /// Recursively discovers target values matching parameters inside structural field instances and updates value parameters.
+        /// Unpacks the embedded type database resource required by AssetsTools to serialize and deserialize assets without engine runtimes.
+        /// </summary>
+        private static void GetTypeTree(ref AssetsManager am)
+        {
+            if (am.ClassPackage != null) return;
+            var assembly = typeof(Uncensor).Assembly;
+            string assemblyName = assembly.GetName().Name;
+            string resourceName = $"{assemblyName}.classdata.tpk";
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+            {
+                foreach (var name in assembly.GetManifestResourceNames()) Log("Available: " + name);
+                throw new Exception("Could not find embedded 'classdata.tpk'!");
+            }
+            am.LoadClassPackage(stream);
+        }
+        /// <summary>
+        /// Gather structural configuration schemas against the first indexed directory file's layout
+        /// </summary>
+        private static bool GetConfSchema(BundleFileInstance bundle, AssetsManager am)
+        {
+            try
+            {
+                if (bundle?.file?.BlockAndDirInfo?.DirectoryInfos == null || bundle.file.BlockAndDirInfo.DirectoryInfos.Count == 0)
+                {
+                    Log("Bundle does not contain any directory blocks.", 1, LogType.Error);
+                    return false;
+                }
+                var firstDir = bundle.file.BlockAndDirInfo.DirectoryInfos[0];
+                var assetInst = am.LoadAssetsFileFromBundle(bundle, firstDir.Name, false);
+                am.LoadClassDatabaseFromPackage(assetInst.file.Metadata.UnityVersion);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log($"Failed to initialize shader search: {ex.Message}", 1, LogType.Error);
+                return false;
+            }            
+        }
+        /// <summary>
+        /// Unpacks compressed archives to a temporary file.
+        /// </summary>
+        private static bool UnpackBundle(AssetsManager am, string originalPath, ref string unpackedPath)
+        {
+            BundleFileInstance bundleInst = null;
+            try
+            {
+                bundleInst = am.LoadBundleFile(originalPath, false);
+                if (bundleInst.file.GetCompressionType() == AssetBundleCompressionType.None)
+                {
+                    Log($"{Path.GetFileName(originalPath)} is already uncompressed. Skipping extraction", 1, LogType.Skip);
+                    unpackedPath = originalPath;
+                    return true;
+                }
+                Log($"Unpacking...", 1);
+                using var writer = new AssetsFileWriter(File.Create(unpackedPath));
+                    bundleInst.file.Unpack(writer);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log($"Failed to unpack bundle: {ex.GetType().Name} - {ex.Message}", 0, LogType.Warning);
+                return false;
+            }
+            finally
+            {
+                CloseBundle(ref bundleInst, am);
+            }            
+        }
+        /// <summary>
+        /// Targets specific naming fields to check for search keywords.
+        /// </summary>
+        private static string ContainsText(AssetTypeValueField field, string target)
+        {
+            if (field == null) return null;
+            //Get the root m_Name
+            var nameField = field["m_Name"];
+            string shaderName = nameField != null && !nameField.IsDummy ? nameField.AsString : string.Empty;
+            // If root m_Name is empty, fall back to m_ParsedForm -> m_Name
+            if (string.IsNullOrWhiteSpace(shaderName))
+            {
+                var parsedForm = field["m_ParsedForm"];
+                if (parsedForm != null && !parsedForm.IsDummy)
+                {
+                    var internalNameField = parsedForm["m_Name"];
+                    if (internalNameField != null && !internalNameField.IsDummy)
+                    {
+                        shaderName = internalNameField.AsString;
+                    }
+                }
+            }
+            // Perform the keyword check on the found name
+            if (!string.IsNullOrEmpty(shaderName) && shaderName.Contains(target, StringComparison.OrdinalIgnoreCase))
+            {
+                return shaderName;
+            }
+            return null;
+        }
+        /// <summary>
+        /// Navigates the shader's structural layout to target and reset color mask parameters.
         /// </summary>
         private static int PatchColMask(AssetTypeValueField field)
         {
-            int changed = 0;
             if (field == null) return 0;
-            // Target color masks/values explicitly named 'val' evaluating to float values of 15
-            if (field.FieldName == "val" && field.Value != null)
-                if (field.AsFloat == 15f)
+            int changed = 0;
+            var parsedForm = field["m_ParsedForm"];
+            if (parsedForm == null || parsedForm.IsDummy) return 0;
+            // Go to m_SubShaders array wrapper
+            var subShadersArray = parsedForm["m_SubShaders"]["Array"];
+            if (subShadersArray == null || subShadersArray.IsDummy) return 0;
+            // Loop through SubShaders
+            foreach (var subShader in subShadersArray.Children)
+            {
+                // Go to m_Passes array wrapper
+                var passesArray = subShader["m_Passes"]["Array"];
+                if (passesArray == null || passesArray.IsDummy) continue;
+                // Loop through Passes
+                foreach (var pass in passesArray.Children)
                 {
-                    field.AsFloat = 0f; // Reset to 0f to strip/disable alpha or mosaic parameters
-                    return 1;
+                    var state = pass["m_State"];
+                    if (state == null || state.IsDummy) continue;
+                    // Loop through fields inside m_State (rtBlend0 to rtBlend7)
+                    foreach (var rtBlend in state.Children)
+                    {
+                        var colMask = rtBlend["colMask"];
+                        if (colMask == null || colMask.IsDummy) continue;
+                        var valField = colMask["val"];
+                        if (valField != null && !valField.IsDummy)
+                        {
+                            //if (valField.AsFloat == 15f) 
+                            if (valField.AsFloat > 0f)
+                            {
+                                valField.AsFloat = 0f;
+                                changed++;
+                            }
+                        }
+                    }
                 }
-            if (field.Children != null)
-                foreach (var child in field.Children)
-                    changed += PatchColMask(child);
+            }
             return changed;
-        }
-        /// <summary>
-        /// Safely releases file handles and resources associated with the bundle and its manager.
-        /// </summary>
-        private static void CloseBundle(BundleFileInstance bundle, AssetsManager am)
-        {
-            bundle?.file?.Close();
-            bundle?.file?.Reader?.Close();
-            am.UnloadAll();
-            GC.Collect();
         }
         /// <summary>
         /// Reads back uncompressed patch outputs and recompresses using selected bundle encoders (LZ4/LZ4fast/LZMA).
@@ -458,13 +567,13 @@ namespace MIUncensor
                 {
                     tempBundle.file.Pack(compWriter, compType);
                 }
-                CloseBundle(tempBundle, tempAm);
+                CloseBundle(ref tempBundle, tempAm);
                 return true;
             }
             catch (Exception)
             {
                 Log($"Couldn't compress to the bundle", 0, LogType.Warning);
-                CloseBundle(tempBundle, tempAm);
+                CloseBundle(ref tempBundle, tempAm);
                 if (File.Exists(compressedPath)) try {File.Delete(compressedPath);} catch {}
                 return false;
             }
@@ -484,7 +593,7 @@ namespace MIUncensor
             }
             catch (Exception ex)
             {
-                Log($"Process Failed! Couldn't overwrite {Path.GetFileName(originalPath)}: {ex.Message}", 0, LogType.Error);
+                Log($"Process Failed! Couldn't overwrite {Path.GetFileName(originalPath)}\nMake sure the game is closed!\n{ex.Message}", 0, LogType.Error);
                 return false;
             }            
         }
@@ -505,13 +614,42 @@ namespace MIUncensor
                 Log($"Creating a backup: {Path.GetFileName(backupFile)}...", 1);
             try
             {
-                File.Copy(fileName, backupFile, true);
+                File.Move(fileName, backupFile, true);
                 return true;
             }
             catch (Exception ex)
             {
-                Log($"Process Failed! Couldn't create/overwrite {Path.GetFileName(backupFile)}: {ex.Message}", 0, LogType.Error);
+                Log($"Process Failed! Couldn't move {Path.GetFileName(fileName)} or overwrite {Path.GetFileName(backupFile)}\nMake sure the game is closed!\n{ex.Message}", 0, LogType.Error);
                 return false;                
+            }
+        }
+        /// <summary>
+        /// Safely releases file handles and resources associated with the bundle and its manager.
+        /// </summary>
+        private static void CloseBundle(ref BundleFileInstance bundle, AssetsManager am)
+        {
+            bundle?.file?.Close();
+            bundle?.file?.Reader?.Close();
+            am.UnloadAll();
+            bundle = null;
+            GC.Collect();
+        }
+        /// <summary>
+        /// Restores a backed up file
+        /// </summary>
+        private static bool RestoreBackup(string fileName)
+        {
+            try
+            {
+                string backupFile = fileName + ".back";
+                if (!string.IsNullOrEmpty(fileName) && File.Exists(backupFile))
+                    File.Move(backupFile, fileName, true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log($"Failed to restore the backup. {ex.Message}", 0, LogType.Error);
+                return false;
             }
         }
         /// <summary>
