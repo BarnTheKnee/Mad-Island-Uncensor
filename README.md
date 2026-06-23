@@ -17,9 +17,6 @@ Get the latest version in [releases](https://github.com/BarnTheKnee/Mad-Island-U
 > But I don't know if the double-click installation without command line will work in every case.  
 > Use at your own risk.
 
-> [!NOTE]
-> The Linux/SteamOS version creates a backup by default. Both the original and backup files are located in the "Mad Island_Data" folder.
-
 1. Download and extract the .zip file into the game's main folder.
 2. Open a terminal in that directory and run the following command:
 ```text
@@ -46,8 +43,6 @@ If you don't want to use the command line:
     Usage: MIUncensor.exe [options]
     Options:
     -b, --backup    Creates a backup of the asset bundles.
-                    Note: Backup creation is enabled by default in the Linux version.
-                          Use -b or --no-backup to skip backup creation in Linux.
     -c [type]       Sets the compression type for output bundles.
                     Using -c without a type disables compression.
                     Available types: lz4fast (default), lz4, lzma.
