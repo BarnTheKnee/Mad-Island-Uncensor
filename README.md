@@ -1,5 +1,6 @@
 # Mad Island Uncensor
-<img width="488" height="322" alt="WindowsTerminal_h70b4NfQJf" src="https://github.com/user-attachments/assets/ce45bf98-d3e3-447e-bf25-8ca859dcc34c" />
+<img width="612" height="354" alt="WindowsTerminal_TvDrWRVGyF" src="https://github.com/user-attachments/assets/3e0446fc-20ab-474b-846f-7fa9b8179fa2" />
+
 
 
 ## :inbox_tray: Download
